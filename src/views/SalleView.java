@@ -2,17 +2,12 @@ package views;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.MenuEvent;
-import javax.swing.event.MenuListener;
-import java.awt.EventQueue;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
+import javax.swing.table.DefaultTableModel;
 import dao.SalleDAO;
 import model.Salle;
-
-import javax.swing.table.DefaultTableModel;
+import java.awt.event.*;
 import java.util.List;
+import com.toedter.calendar.JDateChooser;
 
 public class SalleView extends JFrame {
 
@@ -23,172 +18,186 @@ public class SalleView extends JFrame {
     private JComboBox<String> comboBoxOccupation;
     private DefaultTableModel tableModel;
 
-    public static void main(String[] args) {
-        EventQueue.invokeLater(() -> {
-            try {
-                SalleView frame = new SalleView();
-                frame.setVisible(true);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-    }
-
     public SalleView() {
         setTitle("Gestion des Salles");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setBounds(100, 100, 801, 459);
-
+        setSize(800, 500);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
         
-        JMenuBar menuBar = new JMenuBar();
-        setJMenuBar(menuBar);
-
-       
-        JMenu mnProfesseur = new JMenu("Professeur");
-        mnProfesseur.addMenuListener(new MenuListener() {
-            public void menuSelected(MenuEvent e) {
-                new ProfesseurView().setVisible(true);
-                dispose();
-            }
-            public void menuDeselected(MenuEvent e) {}
-            public void menuCanceled(MenuEvent e) {}
-        });
-        menuBar.add(mnProfesseur);
-
-      
-        JMenu mnClasse = new JMenu("Classe");
-        mnClasse.addMenuListener(new MenuListener() {
-            public void menuSelected(MenuEvent e) {
-                new ClasseView().setVisible(true);
-                dispose();
-            }
-            public void menuDeselected(MenuEvent e) {}
-            public void menuCanceled(MenuEvent e) {}
-        });
-        menuBar.add(mnClasse);
-
-       
-        JMenu mnSalle = new JMenu("Salle");
-        mnSalle.setEnabled(false);
-        menuBar.add(mnSalle);
-        
-        JMenu mnEmloiDuTemps = new JMenu("Emloi du temps");
-        menuBar.add(mnEmloiDuTemps);
-
-        
-
-       
         contentPane = new JPanel();
         contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
         setContentPane(contentPane);
         contentPane.setLayout(null);
 
+        // Initialisation des composants
+        initComponents();
+        
+        // Configuration du menu
+        setupMenuBar();
+        
+        // Affichage initial des données
+        afficherSalles();
+    }
+
+    private void initComponents() {
         JLabel lblDesign = new JLabel("Design:");
-        lblDesign.setBounds(32, 79, 46, 14);
+        lblDesign.setBounds(31, 108, 80, 25);
         contentPane.add(lblDesign);
 
         textFieldDesign = new JTextField();
-        textFieldDesign.setBounds(88, 74, 200, 25);
+        textFieldDesign.setBounds(110, 108, 200, 25);
         contentPane.add(textFieldDesign);
-        textFieldDesign.setColumns(10);
 
         JLabel lblOccupation = new JLabel("Occupation:");
-        lblOccupation.setBounds(10, 133, 68, 20);
+        lblOccupation.setBounds(20, 171, 80, 25);
         contentPane.add(lblOccupation);
 
         comboBoxOccupation = new JComboBox<>(new String[]{"Libre", "Occupée"});
-        comboBoxOccupation.setBounds(88, 131, 200, 25);
+        comboBoxOccupation.setBounds(110, 171, 200, 25);
         contentPane.add(comboBoxOccupation);
 
-        // Table
+        // Tableau des salles
         tableModel = new DefaultTableModel(new Object[]{"ID", "Design", "Occupation"}, 0);
         table = new JTable(tableModel);
         JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.setBounds(298, 23, 450, 250);
+        scrollPane.setBounds(320, 50, 450, 228);
         contentPane.add(scrollPane);
 
-        
+        // Bouton Ajouter
         JButton btnAjouter = new JButton("Ajouter");
-        btnAjouter.setBounds(161, 314, 89, 23);
-        btnAjouter.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                String design = textFieldDesign.getText();
-                String occupation = comboBoxOccupation.getSelectedItem().toString();
-
-                Salle salle = new Salle(0, design, occupation);
-                boolean ok = SalleDAO.ajouter(salle);
-                if (ok) {
-                    JOptionPane.showMessageDialog(null, "Ajout réussi !");
-                    textFieldDesign.setText("");
-                    comboBoxOccupation.setSelectedIndex(0);
-                    afficherSalles();
-                } else {
-                    JOptionPane.showMessageDialog(null, "Échec de l'ajout !");
-                }
-            }
-        });
+        btnAjouter.setBounds(47, 289, 100, 30);
+        btnAjouter.addActionListener(this::ajouterSalle);
         contentPane.add(btnAjouter);
 
-       
+        // Bouton Modifier
         JButton btnModifier = new JButton("Modifier");
-        btnModifier.setBounds(343, 314, 89, 23);
-        btnModifier.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                int selectedRow = table.getSelectedRow();
-                if (selectedRow >= 0) {
-                    int id = (int) tableModel.getValueAt(selectedRow, 0);
-                    String design = textFieldDesign.getText();
-                    String occupation = comboBoxOccupation.getSelectedItem().toString();
-
-                    Salle salle = new Salle(id, design, occupation);
-                    if (SalleDAO.modifier(salle)) {
-                        JOptionPane.showMessageDialog(null, "Modification réussie !");
-                        afficherSalles();
-                    } else {
-                        JOptionPane.showMessageDialog(null, "Échec de la modification !");
-                    }
-                } else {
-                    JOptionPane.showMessageDialog(null, "Veuillez sélectionner une ligne !");
-                }
-            }
-        });
+        btnModifier.setBounds(245, 289, 100, 30);
+        btnModifier.addActionListener(this::modifierSalle);
         contentPane.add(btnModifier);
 
-        
+        // Bouton Supprimer
         JButton btnSupprimer = new JButton("Supprimer");
-        btnSupprimer.setBounds(550, 314, 89, 23);
-        btnSupprimer.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+        btnSupprimer.setBounds(499, 289, 100, 30);
+        btnSupprimer.addActionListener(this::supprimerSalle);
+        contentPane.add(btnSupprimer);
+
+        // Sélection dans le tableau
+        table.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
                 int selectedRow = table.getSelectedRow();
                 if (selectedRow >= 0) {
-                    int id = (int) tableModel.getValueAt(selectedRow, 0);
-                    int confirm = JOptionPane.showConfirmDialog(null, "Confirmer la suppression ?");
-                    if (confirm == JOptionPane.YES_OPTION) {
-                        if (SalleDAO.supprimer(id)) {
-                            JOptionPane.showMessageDialog(null, "Suppression réussie !");
-                            afficherSalles();
-                        } else {
-                            JOptionPane.showMessageDialog(null, "Échec de la suppression !");
-                        }
-                    }
-                } else {
-                    JOptionPane.showMessageDialog(null, "Veuillez sélectionner une ligne !");
+                    textFieldDesign.setText(tableModel.getValueAt(selectedRow, 1).toString());
+                    comboBoxOccupation.setSelectedItem(tableModel.getValueAt(selectedRow, 2).toString());
                 }
             }
         });
-        contentPane.add(btnSupprimer);
+    }
 
-       
-        table.getSelectionModel().addListSelectionListener(e -> {
-            int selectedRow = table.getSelectedRow();
-            if (selectedRow >= 0) {
-                textFieldDesign.setText(tableModel.getValueAt(selectedRow, 1).toString());
-                comboBoxOccupation.setSelectedItem(tableModel.getValueAt(selectedRow, 2).toString());
-            }
+    private void setupMenuBar() {
+        JMenuBar menuBar = new JMenuBar();
+        
+        // Menu Navigation
+        JMenu mnNavigation = new JMenu("Navigation");
+        
+        // Item Professeur
+        JMenuItem miProfesseur = new JMenuItem("Professeurs");
+        miProfesseur.addActionListener(e -> {
+            new ProfesseurView().setVisible(true);
+            dispose();
+        });
+        
+        // Item Classe
+        JMenuItem miClasse = new JMenuItem("Classes");
+        miClasse.addActionListener(e -> {
+            new ClasseView().setVisible(true);
+            dispose();
+        });
+        
+        // Item Salle (désactivé car on est déjà sur cette vue)
+        JMenuItem miSalle = new JMenuItem("Salles");
+        miSalle.setEnabled(false);
+        
+        // Item Emploi du temps
+        JMenuItem miEDT = new JMenuItem("Emploi du temps");
+        miEDT.addActionListener(e -> {
+            new EmploiDuTempsView().setVisible(true);
+            dispose();
         });
 
-        setLocationRelativeTo(null);
-        afficherSalles();
+        mnNavigation.add(miProfesseur);
+        mnNavigation.add(miClasse);
+        mnNavigation.add(miSalle);
+        mnNavigation.add(miEDT);
+        
+        menuBar.add(mnNavigation);
+        setJMenuBar(menuBar);
+    }
+
+    private void ajouterSalle(ActionEvent e) {
+        String design = textFieldDesign.getText().trim();
+        String occupation = comboBoxOccupation.getSelectedItem().toString();
+
+        if (design.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Veuillez saisir un design.");
+            return;
+        }
+
+        Salle salle = new Salle(design, occupation);
+        boolean ok = SalleDAO.ajouter(salle);
+
+        if (ok) {
+            JOptionPane.showMessageDialog(this, "Ajout réussi !");
+            viderChamps();
+            afficherSalles();
+        } else {
+            JOptionPane.showMessageDialog(this, "Échec de l'ajout !");
+        }
+    }
+
+    private void modifierSalle(ActionEvent e) {
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Veuillez sélectionner une salle à modifier.");
+            return;
+        }
+
+        int id = (int) tableModel.getValueAt(selectedRow, 0);
+        String design = textFieldDesign.getText().trim();
+        String occupation = comboBoxOccupation.getSelectedItem().toString();
+
+        Salle salle = new Salle(id, design, occupation);
+        boolean ok = SalleDAO.modifier(salle);
+
+        if (ok) {
+            JOptionPane.showMessageDialog(this, "Modification réussie !");
+            afficherSalles();
+        } else {
+            JOptionPane.showMessageDialog(this, "Échec de la modification !");
+        }
+    }
+
+    private void supprimerSalle(ActionEvent e) {
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Veuillez sélectionner une salle à supprimer.");
+            return;
+        }
+
+        int id = (int) tableModel.getValueAt(selectedRow, 0);
+        int confirm = JOptionPane.showConfirmDialog(this, 
+            "Voulez-vous vraiment supprimer cette salle ?", 
+            "Confirmation", JOptionPane.YES_NO_OPTION);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            boolean ok = SalleDAO.supprimer(id);
+            if (ok) {
+                JOptionPane.showMessageDialog(this, "Suppression réussie !");
+                viderChamps();
+                afficherSalles();
+            } else {
+                JOptionPane.showMessageDialog(this, "Échec de la suppression !");
+            }
+        }
     }
 
     private void afficherSalles() {
@@ -197,5 +206,15 @@ public class SalleView extends JFrame {
         for (Salle s : salles) {
             tableModel.addRow(new Object[]{s.getIdsalle(), s.getDesign(), s.getOccupation()});
         }
+    }
+
+    private void viderChamps() {
+        textFieldDesign.setText("");
+        comboBoxOccupation.setSelectedIndex(0);
+        table.clearSelection();
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new SalleView().setVisible(true));
     }
 }

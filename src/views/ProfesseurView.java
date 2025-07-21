@@ -2,13 +2,10 @@ package views;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-
 import model.Professeur;
 import dao.ProfesseurDAO;
-
 import java.awt.event.*;
 import java.util.List;
-import java.awt.Color;
 
 public class ProfesseurView extends JFrame {
 
@@ -21,157 +18,201 @@ public class ProfesseurView extends JFrame {
 
     public ProfesseurView() {
         setTitle("Gestion des Professeurs");
-        setSize(764, 480);
+        setSize(800, 500);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         getContentPane().setLayout(null);
 
+        // Initialisation des composants
+        initComponents();
+        
+        // Configuration du menu
+        setupMenuBar();
+        
+        // Affichage initial des données
+        afficherTousLesProfesseurs();
+    }
+
+    private void initComponents() {
         JLabel lblNom = new JLabel("Nom:");
-        lblNom.setBounds(16, 39, 46, 25);
+        lblNom.setBounds(19, 98, 50, 25);
         getContentPane().add(lblNom);
 
         txtNom = new JTextField();
-        txtNom.setBounds(72, 39, 200, 25);
+        txtNom.setBounds(99, 98, 200, 25);
         getContentPane().add(txtNom);
 
         JLabel lblPrenoms = new JLabel("Prénoms:");
-        lblPrenoms.setBounds(10, 120, 70, 14);
+        lblPrenoms.setBounds(19, 170, 70, 25);
         getContentPane().add(lblPrenoms);
 
         txtPrenoms = new JTextField();
-        txtPrenoms.setBounds(72, 115, 200, 25);
+        txtPrenoms.setBounds(99, 170, 200, 25);
         getContentPane().add(txtPrenoms);
 
         JLabel lblGrade = new JLabel("Grade:");
-        lblGrade.setBounds(16, 209, 46, 14);
+        lblGrade.setBounds(20, 242, 50, 25);
         getContentPane().add(lblGrade);
 
         String[] grades = {
             "Professeur titulaire", "Maître de Conférences",
-            "Assistant d’Enseignement Supérieur et de Recherche",
+            "Assistant d'Enseignement Supérieur et de Recherche",
             "Docteur HDR", "Docteur en Informatique", "Doctorant en informatique"
         };
 
         cbGrade = new JComboBox<>(grades);
-        cbGrade.setBounds(72, 204, 200, 25);
+        cbGrade.setBounds(99, 242, 200, 25);
         getContentPane().add(cbGrade);
 
-        
+        // Bouton Ajouter
         JButton btnAjouter = new JButton("Ajouter");
-        btnAjouter.setBounds(72, 313, 89, 23);
+        btnAjouter.setBounds(114, 374, 100, 30);
+        btnAjouter.addActionListener(this::ajouterProfesseur);
         getContentPane().add(btnAjouter);
 
-        btnAjouter.addActionListener(e -> {
-            String nom = txtNom.getText();
-            String prenoms = txtPrenoms.getText();
-            String grade = cbGrade.getSelectedItem().toString();
-
-            if (nom.isEmpty() || prenoms.isEmpty()) {
-                JOptionPane.showMessageDialog(null, "Veuillez remplir tous les champs.");
-                return;
-            }
-
-            Professeur p = new Professeur(nom, prenoms, grade);
-            boolean ok = ProfesseurDAO.ajouter(p);
-
-            if (ok) {
-                JOptionPane.showMessageDialog(null, "Ajout réussi ! ID généré = " + p.getIdprof());
-                viderChamps();
-                afficherTousLesProfesseurs();
-            } else {
-                JOptionPane.showMessageDialog(null, "Échec de l'ajout !");
-            }
-        });
-
- 
+        // Bouton Modifier
         JButton btnModifier = new JButton("Modifier");
-        btnModifier.setBounds(309, 313, 89, 23);
+        btnModifier.setBounds(367, 374, 100, 30);
+        btnModifier.addActionListener(this::modifierProfesseur);
         getContentPane().add(btnModifier);
 
-        btnModifier.addActionListener(e -> {
-            int selectedRow = table.getSelectedRow();
-            if (selectedRow == -1) {
-                JOptionPane.showMessageDialog(null, "Sélectionnez un professeur à modifier.");
-                return;
-            }
-
-            int id = (int) tableModel.getValueAt(selectedRow, 0);
-            String nom = txtNom.getText();
-            String prenoms = txtPrenoms.getText();
-            String grade = cbGrade.getSelectedItem().toString();
-
-            Professeur p = new Professeur(id, nom, prenoms, grade);
-            boolean ok = ProfesseurDAO.modifier(p);
-
-            if (ok) {
-                JOptionPane.showMessageDialog(null, "Modification réussie !");
-                viderChamps();
-                afficherTousLesProfesseurs();
-            } else {
-                JOptionPane.showMessageDialog(null, "Échec de la modification !");
-            }
-        });
-
-        // BOUTON SUPPRIMER
+        // Bouton Supprimer
         JButton btnSupprimer = new JButton("Supprimer");
-        btnSupprimer.setBounds(548, 313, 100, 23);
+        btnSupprimer.setBounds(565, 374, 100, 30);
+        btnSupprimer.addActionListener(this::supprimerProfesseur);
         getContentPane().add(btnSupprimer);
 
-        btnSupprimer.addActionListener(e -> {
-            int selectedRow = table.getSelectedRow();
-            if (selectedRow == -1) {
-                JOptionPane.showMessageDialog(null, "Sélectionnez un professeur à supprimer.");
-                return;
-            }
-
-            int id = (int) tableModel.getValueAt(selectedRow, 0);
-
-            int confirm = JOptionPane.showConfirmDialog(null, "Voulez-vous vraiment supprimer ce professeur ?", "Confirmation", JOptionPane.YES_NO_OPTION);
-            if (confirm == JOptionPane.YES_OPTION) {
-                boolean ok = ProfesseurDAO.supprimer(id);
-                if (ok) {
-                    JOptionPane.showMessageDialog(null, "Suppression réussie !");
-                    afficherTousLesProfesseurs();
-                } else {
-                    JOptionPane.showMessageDialog(null, "Échec de la suppression !");
-                }
-            }
-        });
-
-        
+        // Tableau des professeurs
         tableModel = new DefaultTableModel(new Object[]{"ID", "Nom", "Prénoms", "Grade"}, 0);
         table = new JTable(tableModel);
         JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.setBounds(298, 23, 450, 250);
+        scrollPane.setBounds(320, 40, 450, 287);
         getContentPane().add(scrollPane);
-    
-        
-        JMenuBar menuBar_1 = new JMenuBar();
-        setJMenuBar(menuBar_1);
-        
-        JMenu mnNewMenu = new JMenu("Professeur");
-        menuBar_1.add(mnNewMenu);
-        
-        JMenu mnClasee = new JMenu("Classe");
-        menuBar_1.add(mnClasee);
-        
-        JMenu mnSalle = new JMenu("Salle");
-        menuBar_1.add(mnSalle);
-        
-        JMenu mnEmploiDuTemps = new JMenu("Emploi du temps");
-        menuBar_1.add(mnEmploiDuTemps);
 
-      
+        // Sélection dans le tableau
         table.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 int selectedRow = table.getSelectedRow();
-                txtNom.setText(tableModel.getValueAt(selectedRow, 1).toString());
-                txtPrenoms.setText(tableModel.getValueAt(selectedRow, 2).toString());
-                cbGrade.setSelectedItem(tableModel.getValueAt(selectedRow, 3).toString());
+                if (selectedRow >= 0) {
+                    txtNom.setText(tableModel.getValueAt(selectedRow, 1).toString());
+                    txtPrenoms.setText(tableModel.getValueAt(selectedRow, 2).toString());
+                    cbGrade.setSelectedItem(tableModel.getValueAt(selectedRow, 3).toString());
+                }
             }
         });
+    }
 
-        afficherTousLesProfesseurs();
+    private void setupMenuBar() {
+        JMenuBar menuBar = new JMenuBar();
+        
+        // Menu Navigation
+        JMenu mnNavigation = new JMenu("Navigation");
+        
+        // Item Professeur
+        JMenuItem miProfesseur = new JMenuItem("Professeurs");
+        miProfesseur.addActionListener(e -> {
+            new ProfesseurView().setVisible(true);
+            dispose();
+        });
+        
+        // Item Classe
+        JMenuItem miClasse = new JMenuItem("Classes");
+        miClasse.addActionListener(e -> {
+            new ClasseView().setVisible(true);
+            dispose();
+        });
+        
+        // Item Salle
+        JMenuItem miSalle = new JMenuItem("Salles");
+        miSalle.addActionListener(e -> {
+            new SalleView().setVisible(true);
+            dispose();
+        });
+        
+        // Item Emploi du temps
+        JMenuItem miEDT = new JMenuItem("Emploi du temps");
+        miEDT.addActionListener(e -> {
+            new EmploiDuTempsView().setVisible(true);
+            dispose();
+        });
+
+        mnNavigation.add(miProfesseur);
+        mnNavigation.add(miClasse);
+        mnNavigation.add(miSalle);
+        mnNavigation.add(miEDT);
+        
+        menuBar.add(mnNavigation);
+        setJMenuBar(menuBar);
+    }
+
+    private void ajouterProfesseur(ActionEvent e) {
+        String nom = txtNom.getText();
+        String prenoms = txtPrenoms.getText();
+        String grade = cbGrade.getSelectedItem().toString();
+
+        if (nom.isEmpty() || prenoms.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Veuillez remplir tous les champs.");
+            return;
+        }
+
+        Professeur p = new Professeur(nom, prenoms, grade);
+        boolean ok = ProfesseurDAO.ajouter(p);
+
+        if (ok) {
+            JOptionPane.showMessageDialog(this, "Ajout réussi ! ID généré = " + p.getIdprof());
+            viderChamps();
+            afficherTousLesProfesseurs();
+        } else {
+            JOptionPane.showMessageDialog(this, "Échec de l'ajout !");
+        }
+    }
+
+    private void modifierProfesseur(ActionEvent e) {
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Sélectionnez un professeur à modifier.");
+            return;
+        }
+
+        int id = (int) tableModel.getValueAt(selectedRow, 0);
+        String nom = txtNom.getText();
+        String prenoms = txtPrenoms.getText();
+        String grade = cbGrade.getSelectedItem().toString();
+
+        Professeur p = new Professeur(id, nom, prenoms, grade);
+        boolean ok = ProfesseurDAO.modifier(p);
+
+        if (ok) {
+            JOptionPane.showMessageDialog(this, "Modification réussie !");
+            viderChamps();
+            afficherTousLesProfesseurs();
+        } else {
+            JOptionPane.showMessageDialog(this, "Échec de la modification !");
+        }
+    }
+
+    private void supprimerProfesseur(ActionEvent e) {
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Sélectionnez un professeur à supprimer.");
+            return;
+        }
+
+        int id = (int) tableModel.getValueAt(selectedRow, 0);
+
+        int confirm = JOptionPane.showConfirmDialog(this, 
+            "Voulez-vous vraiment supprimer ce professeur ?", 
+            "Confirmation", JOptionPane.YES_NO_OPTION);
+        
+        if (confirm == JOptionPane.YES_OPTION) {
+            boolean ok = ProfesseurDAO.supprimer(id);
+            if (ok) {
+                JOptionPane.showMessageDialog(this, "Suppression réussie !");
+                afficherTousLesProfesseurs();
+            } else {
+                JOptionPane.showMessageDialog(this, "Échec de la suppression !");
+            }
+        }
     }
 
     private void afficherTousLesProfesseurs() {

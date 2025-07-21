@@ -1,11 +1,15 @@
 package model;
-
+import java.text.SimpleDateFormat;
 public class EmploiDuTemps {
     private int idsalle;
     private String idprof;
     private String idclasse;
     private String cours;
-    private String date; 
+    private String date;
+    private String salleDesign; // Nouveau champ pour le nom de la salle
+    private String profNomComplet; // Nouveau champ pour le nom complet du professeur
+    private String classeNiveau; // Nouveau champ pour le niveau de la classe
+    
 
     public EmploiDuTemps() {}
 
@@ -17,6 +21,7 @@ public class EmploiDuTemps {
         this.date = date;
     }
 
+    // Getters et Setters
     public int getIdsalle() {
         return idsalle;
     }
@@ -56,7 +61,54 @@ public class EmploiDuTemps {
     public void setDate(String date) {
         this.date = date;
     }
+
+    public String getSalleDesign() {
+        return salleDesign;
+    }
+
+    public void setSalleDesign(String salleDesign) {
+        this.salleDesign = salleDesign;
+    }
+
+    public String getProfNomComplet() {
+        return profNomComplet;
+    }
+
+    public void setProfNomComplet(String profNomComplet) {
+        this.profNomComplet = profNomComplet;
+    }
+
+    public String getClasseNiveau() {
+        return classeNiveau;
+    }
+
+    public void setClasseNiveau(String classeNiveau) {
+        this.classeNiveau = classeNiveau;
+    }
+
+    // Méthode utilitaire pour obtenir la date formatée
+    public String getDateFormatee() {
+        try {
+            SimpleDateFormat sdfDB = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            SimpleDateFormat sdfDisplay = new SimpleDateFormat("EEEE dd MMMM yyyy - HH:mm");
+            java.util.Date date = sdfDB.parse(this.date);
+            return sdfDisplay.format(date);
+        } catch (Exception e) {
+            return this.date; // Retourne la date originale si le formatage échoue
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "EmploiDuTemps{" +
+                "idsalle=" + idsalle +
+                ", salleDesign='" + salleDesign + '\'' +
+                ", idprof='" + idprof + '\'' +
+                ", profNomComplet='" + profNomComplet + '\'' +
+                ", idclasse='" + idclasse + '\'' +
+                ", classeNiveau='" + classeNiveau + '\'' +
+                ", cours='" + cours + '\'' +
+                ", date='" + date + '\'' +
+                '}';
+    }
 }
-
-
-
