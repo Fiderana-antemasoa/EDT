@@ -12,6 +12,10 @@ import java.util.List;
 import java.util.ArrayList;
 import java.sql.*;
 import java.util.Date;
+import javax.swing.SpinnerDateModel;
+import java.util.Calendar;
+import java.util.Date;
+
 
 public class EmploiDuTempsView extends JFrame {
 
@@ -28,6 +32,8 @@ public class EmploiDuTempsView extends JFrame {
     private DefaultTableModel sallesLibresModel;
     private EmploiDuTempsDAO dao;
     private JSpinner spinnerHeure;
+    private JSpinner hourSpinner;
+
 
     public EmploiDuTempsView() {
         setTitle("Gestion Emploi du Temps");
@@ -93,24 +99,24 @@ public class EmploiDuTempsView extends JFrame {
         // Sélecteur de date
      // DateChooser
         dateChooser = new JDateChooser();
-        dateChooser.setBounds(120, 200, 135, 25);
+        dateChooser.setBounds(120, 200, 120, 25);
+        dateChooser.setDateFormatString("yyyy-MM-dd"); // Affiche uniquement la date
         contentPane.add(dateChooser);
 
         // HeureSpinner
-        SpinnerDateModel heureModel = new SpinnerDateModel();
-        spinnerHeure = new JSpinner(heureModel);
-        JSpinner.DateEditor editor = new JSpinner.DateEditor(spinnerHeure, "HH:mm");
-        spinnerHeure.setEditor(editor);
-        spinnerHeure.setBounds(260, 200, 62, 25);
-        contentPane.add(spinnerHeure);
-
+        SpinnerDateModel hourModel = new SpinnerDateModel();
+        hourSpinner = new JSpinner(hourModel);
+        JSpinner.DateEditor editor = new JSpinner.DateEditor(hourSpinner, "HH:mm");
+        hourSpinner.setEditor(editor);
+        hourSpinner.setBounds(240, 200, 80, 25);
+        contentPane.add(hourSpinner);
         
         // Tableau principal
         tableModel = new DefaultTableModel(new Object[]{"ID Salle", "ID Prof", "ID Classe", "Cours", "Date"}, 0);
         table = new JTable(tableModel);
         
         JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.setBounds(350, 38, 623, 200);
+        scrollPane.setBounds(350, 40, 623, 200);
         contentPane.add(scrollPane);
 
         // Boutons
@@ -352,20 +358,44 @@ public class EmploiDuTempsView extends JFrame {
             String idclasse = textField_idclasse.getText().trim();
             String cours = textField_cours.getText().trim();
 
-            java.util.Date date = dateChooser.getDate();
+            // Vérifie que la date est sélectionnée
+            Date date = dateChooser.getDate();
             if (date == null) {
                 JOptionPane.showMessageDialog(this, "Veuillez sélectionner une date.");
                 return null;
             }
+
+            // Récupère l’heure depuis le spinner (tu dois avoir défini hourSpinner quelque part)
+            Date heure = (Date) hourSpinner.getValue();
+
+            // Fusionne date + heure
+            Calendar calendarDate = Calendar.getInstance();
+            calendarDate.setTime(date);
+
+            Calendar calendarHeure = Calendar.getInstance();
+            calendarHeure.setTime(heure);
+
+            calendarDate.set(Calendar.HOUR_OF_DAY, calendarHeure.get(Calendar.HOUR_OF_DAY));
+            calendarDate.set(Calendar.MINUTE, calendarHeure.get(Calendar.MINUTE));
+            calendarDate.set(Calendar.SECOND, 0);
+
+            // Format final au format String
+            Date dateTimeFinal = calendarDate.getTime();
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            String dateStr = sdf.format(date);
+            String dateStr = sdf.format(dateTimeFinal);
 
             return new EmploiDuTemps(idsalle, idprof, idclasse, cours, dateStr);
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(this, "ID Salle doit être un entier.");
             return null;
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Erreur lors de la récupération des champs.");
+            ex.printStackTrace();
+            return null;
         }
     }
+
+
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new EmploiDuTempsView().setVisible(true));
