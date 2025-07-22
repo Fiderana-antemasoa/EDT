@@ -1,18 +1,17 @@
 package views;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
+import javax.swing.border.*;
 import javax.swing.table.DefaultTableModel;
 import dao.SalleDAO;
 import model.Salle;
+import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
-import com.toedter.calendar.JDateChooser;
 
 public class SalleView extends JFrame {
 
     private static final long serialVersionUID = 1L;
-    private JPanel contentPane;
     private JTextField textFieldDesign;
     private JTable table;
     private JComboBox<String> comboBoxOccupation;
@@ -20,66 +19,99 @@ public class SalleView extends JFrame {
 
     public SalleView() {
         setTitle("Gestion des Salles");
-        setSize(800, 500);
+        setSize(900, 550);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         
-        contentPane = new JPanel();
-        contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
-        setContentPane(contentPane);
-        contentPane.setLayout(null);
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-        // Initialisation des composants
         initComponents();
-        
-        // Configuration du menu
         setupMenuBar();
-        
-        // Affichage initial des données
         afficherSalles();
     }
 
     private void initComponents() {
-        JLabel lblDesign = new JLabel("Design:");
-        lblDesign.setBounds(31, 108, 80, 25);
-        contentPane.add(lblDesign);
+        // Panel principal avec BorderLayout
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+        mainPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
+        mainPanel.setBackground(new Color(240, 240, 240));
+        setContentPane(mainPanel);
 
+        // Panel de formulaire
+        JPanel formPanel = new JPanel(new GridLayout(0, 2, 10, 10));
+        formPanel.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(new Color(70, 130, 180), 1),
+                "Informations Salle",
+                TitledBorder.DEFAULT_JUSTIFICATION,
+                TitledBorder.DEFAULT_POSITION,
+                new Font("Segoe UI", Font.BOLD, 12),
+                new Color(70, 130, 180)));
+        formPanel.setBackground(Color.WHITE);
+
+        // Champs de formulaire
+        JLabel lblDesign = new JLabel("Design:");
+        lblDesign.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         textFieldDesign = new JTextField();
-        textFieldDesign.setBounds(110, 108, 200, 25);
-        contentPane.add(textFieldDesign);
+        textFieldDesign.setFont(new Font("Segoe UI", Font.PLAIN, 12));
 
         JLabel lblOccupation = new JLabel("Occupation:");
-        lblOccupation.setBounds(20, 171, 80, 25);
-        contentPane.add(lblOccupation);
-
+        lblOccupation.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         comboBoxOccupation = new JComboBox<>(new String[]{"Libre", "Occupée"});
-        comboBoxOccupation.setBounds(110, 171, 200, 25);
-        contentPane.add(comboBoxOccupation);
+        comboBoxOccupation.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+
+        formPanel.add(lblDesign);
+        formPanel.add(textFieldDesign);
+        formPanel.add(lblOccupation);
+        formPanel.add(comboBoxOccupation);
+
+        // Boutons
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
+        buttonPanel.setBackground(new Color(240, 240, 240));
+
+        JButton btnAjouter = createStyledButton("Ajouter", new Color(46, 125, 50));
+        btnAjouter.addActionListener(this::ajouterSalle);
+
+        JButton btnModifier = createStyledButton("Modifier", new Color(30, 136, 229));
+        btnModifier.addActionListener(this::modifierSalle);
+
+        JButton btnSupprimer = createStyledButton("Supprimer", new Color(198, 40, 40));
+        btnSupprimer.addActionListener(this::supprimerSalle);
+
+        buttonPanel.add(btnAjouter);
+        buttonPanel.add(btnModifier);
+        buttonPanel.add(btnSupprimer);
 
         // Tableau des salles
-        tableModel = new DefaultTableModel(new Object[]{"ID", "Design", "Occupation"}, 0);
+        tableModel = new DefaultTableModel(new Object[]{"ID", "Design", "Occupation"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+            
+        };
+        
         table = new JTable(tableModel);
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        table.setRowHeight(25);
+        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
+        table.getTableHeader().setBackground(new Color(70, 130, 180));
+        table.getTableHeader().setForeground(Color.BLACK);
+        
         JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.setBounds(320, 50, 450, 228);
-        contentPane.add(scrollPane);
+        scrollPane.setBorder(BorderFactory.createTitledBorder("Liste des Salles"));
 
-        // Bouton Ajouter
-        JButton btnAjouter = new JButton("Ajouter");
-        btnAjouter.setBounds(47, 289, 100, 30);
-        btnAjouter.addActionListener(this::ajouterSalle);
-        contentPane.add(btnAjouter);
+        // Organisation des panels
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.add(formPanel, BorderLayout.CENTER);
+        topPanel.add(buttonPanel, BorderLayout.SOUTH);
 
-        // Bouton Modifier
-        JButton btnModifier = new JButton("Modifier");
-        btnModifier.setBounds(245, 289, 100, 30);
-        btnModifier.addActionListener(this::modifierSalle);
-        contentPane.add(btnModifier);
-
-        // Bouton Supprimer
-        JButton btnSupprimer = new JButton("Supprimer");
-        btnSupprimer.setBounds(499, 289, 100, 30);
-        btnSupprimer.addActionListener(this::supprimerSalle);
-        contentPane.add(btnSupprimer);
+        mainPanel.add(topPanel, BorderLayout.NORTH);
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
 
         // Sélection dans le tableau
         table.getSelectionModel().addListSelectionListener(e -> {
@@ -93,32 +125,42 @@ public class SalleView extends JFrame {
         });
     }
 
+    private JButton createStyledButton(String text, Color bgColor) {
+        JButton button = new JButton(text);
+        button.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        button.setBackground(bgColor);
+        button.setForeground(Color.BLACK);
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return button;
+    }
+
     private void setupMenuBar() {
         JMenuBar menuBar = new JMenuBar();
+        menuBar.setBackground(new Color(70, 130, 180));
+        menuBar.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
         
-        // Menu Navigation
         JMenu mnNavigation = new JMenu("Navigation");
+        mnNavigation.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        mnNavigation.setForeground(Color.BLACK);
         
-        // Item Professeur
-        JMenuItem miProfesseur = new JMenuItem("Professeurs");
+        JMenuItem miProfesseur = createMenuItem("Professeurs");
         miProfesseur.addActionListener(e -> {
             new ProfesseurView().setVisible(true);
             dispose();
         });
         
-        // Item Classe
-        JMenuItem miClasse = new JMenuItem("Classes");
+        JMenuItem miClasse = createMenuItem("Classes");
         miClasse.addActionListener(e -> {
             new ClasseView().setVisible(true);
             dispose();
         });
         
-        // Item Salle (désactivé car on est déjà sur cette vue)
-        JMenuItem miSalle = new JMenuItem("Salles");
+        JMenuItem miSalle = createMenuItem("Salles");
         miSalle.setEnabled(false);
         
-        // Item Emploi du temps
-        JMenuItem miEDT = new JMenuItem("Emploi du temps");
+        JMenuItem miEDT = createMenuItem("Emploi du temps");
         miEDT.addActionListener(e -> {
             new EmploiDuTempsView().setVisible(true);
             dispose();
@@ -131,6 +173,12 @@ public class SalleView extends JFrame {
         
         menuBar.add(mnNavigation);
         setJMenuBar(menuBar);
+    }
+
+    private JMenuItem createMenuItem(String text) {
+        JMenuItem menuItem = new JMenuItem(text);
+        menuItem.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        return menuItem;
     }
 
     private void ajouterSalle(ActionEvent e) {

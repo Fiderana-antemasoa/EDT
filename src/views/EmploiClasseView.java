@@ -219,8 +219,6 @@ public class EmploiClasseView extends JFrame {
             }
 
             // Heures standard
-           // String[] heures = {"08:00", "10:00", "12:00", "14:00", "16:00"};
-         // Définissez vos plages horaires
             String[] heures = {"08:00-10:00", "10:00-12:00", "12:00-14:00", "14:00-16:00", "16:00-18:00"};
 
             // Organiser les données dans une structure plus pratique
@@ -228,7 +226,6 @@ public class EmploiClasseView extends JFrame {
             
             Map<String, Map<String, List<String>>> emploiOrganise = new LinkedHashMap<>();           
             
-
             // Initialisation de la structure
             for (String jour : joursSemaine) {
                 emploiOrganise.put(jour, new LinkedHashMap<>());
@@ -236,27 +233,24 @@ public class EmploiClasseView extends JFrame {
                     emploiOrganise.get(jour).put(plage, new ArrayList<>());
                 }
             }
-         // Remplissage avec les données réelles
-            SimpleDateFormat sdfJour = new SimpleDateFormat("EEEE", new Locale("fr", "FR")); // Français de France
+            
+            // Remplissage avec les données réelles
+            SimpleDateFormat sdfJour = new SimpleDateFormat("EEEE", new Locale("fr", "FR"));
             SimpleDateFormat sdfHeure = new SimpleDateFormat("HH:mm");
             SimpleDateFormat sdfDB = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             
-            
-
             for (EmploiDuTemps edt : emplois) {
-            
                 try {
                     Date date = sdfDB.parse(edt.getDate());
                     String jour = sdfJour.format(date).toLowerCase();
                     String heure = sdfHeure.format(date);
                     
-                 // Dans la méthode de génération PDF
                     if (Arrays.asList("samedi", "dimanche").contains(jour)) continue;
                     String plage = trouverPlageHoraire(heure, heures);
-                	
-                    // Vérifie si le jour existe dans notre structure
+                    
                     if (plage != null) {
-                        String info = edt.getCours() + " (" + edt.getIdprof() + ", " + edt.getIdsalle() + ")";
+                        // Modification ici pour utiliser le nom complet et le design de salle
+                        String info = edt.getCours() + "\nProf: " + edt.getProfNomComplet() + "\nSalle: " + edt.getSalleDesign();
                         emploiOrganise.get(jour).get(plage).add(info);
                     }
                 } catch (Exception ex) {
@@ -265,9 +259,7 @@ public class EmploiClasseView extends JFrame {
                 }
             }
             
-            
-
-         // Remplissage du tableau PDF
+            // Remplissage du tableau PDF
             for (String heure : heures) {
                 // Cellule heure
                 PdfPCell cellHeure = new PdfPCell(new Phrase(heure));
@@ -277,26 +269,17 @@ public class EmploiClasseView extends JFrame {
                 
                 // Cellules pour chaque jour
                 for (String jour : joursSemaine) {
-                	List<String> coursList = emploiOrganise.get(jour).get(heure);
-                    
-                    
+                    List<String> coursList = emploiOrganise.get(jour).get(heure);
                     
                     // Création du contenu détaillé
                     Paragraph details = new Paragraph();
                     
                     if (!coursList.isEmpty()) {
-                        for (int i = 0; i < coursList.size(); i++) {
-                            if (i > 0) details.add(new Phrase("\n\n")); // Double saut de ligne entre cours
-                            
-                            String[] elements = coursList.get(i).split("\\(")[1].replace(")", "").split(",");
-                            String matiere = coursList.get(i).split("\\(")[0].trim();
-                            
-                            details.add(new Phrase(matiere + "\n", 
-                                new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD)));
-                            details.add(new Phrase("Prof: " + elements[0].trim() + "\n",
-                                new Font(Font.FontFamily.HELVETICA, 9, Font.NORMAL)));
-                            details.add(new Phrase("Salle: " + elements[1].trim(),
-                                new Font(Font.FontFamily.HELVETICA, 9, Font.NORMAL)));
+                        for (String coursInfo : coursList) {
+                            if (details.size() > 0) {
+                                details.add(new Phrase("\n\n"));
+                            }
+                            details.add(new Phrase(coursInfo, new Font(Font.FontFamily.HELVETICA, 9, Font.NORMAL)));
                         }
                     } else {
                         details.add(new Phrase("-"));
@@ -329,7 +312,7 @@ public class EmploiClasseView extends JFrame {
             }
         }
     }
-           
+
     private String trouverPlageHoraire(String heure, String[] plagesHoraires) {
         try {
             SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");

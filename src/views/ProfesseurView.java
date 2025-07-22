@@ -1,9 +1,11 @@
 package views;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import model.Professeur;
 import dao.ProfesseurDAO;
+import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
 
@@ -18,10 +20,16 @@ public class ProfesseurView extends JFrame {
 
     public ProfesseurView() {
         setTitle("Gestion des Professeurs");
-        setSize(800, 500);
+        setSize(900, 600);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        getContentPane().setLayout(null);
+        
+        // Appliquer un look and feel moderne
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         // Initialisation des composants
         initComponents();
@@ -34,62 +42,93 @@ public class ProfesseurView extends JFrame {
     }
 
     private void initComponents() {
+        // Panel principal avec BorderLayout
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+        mainPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
+        mainPanel.setBackground(new Color(240, 240, 240));
+        
+        // Panel de formulaire
+        JPanel formPanel = new JPanel();
+        formPanel.setLayout(new GridLayout(0, 2, 10, 10));
+        formPanel.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(new Color(70, 130, 180), 1),
+                "Informations du Professeur",
+                javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
+                javax.swing.border.TitledBorder.DEFAULT_POSITION,
+                new Font("Segoe UI", Font.BOLD, 12),
+                new Color(70, 130, 180)));
+        formPanel.setBackground(Color.WHITE);
+        
+        // Ajout des champs de formulaire
         JLabel lblNom = new JLabel("Nom:");
-        lblNom.setBounds(19, 98, 50, 25);
-        getContentPane().add(lblNom);
-
+        lblNom.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         txtNom = new JTextField();
-        txtNom.setBounds(99, 98, 200, 25);
-        getContentPane().add(txtNom);
-
+        txtNom.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        
         JLabel lblPrenoms = new JLabel("Prénoms:");
-        lblPrenoms.setBounds(19, 170, 70, 25);
-        getContentPane().add(lblPrenoms);
-
+        lblPrenoms.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         txtPrenoms = new JTextField();
-        txtPrenoms.setBounds(99, 170, 200, 25);
-        getContentPane().add(txtPrenoms);
-
+        txtPrenoms.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        
         JLabel lblGrade = new JLabel("Grade:");
-        lblGrade.setBounds(20, 242, 50, 25);
-        getContentPane().add(lblGrade);
-
+        lblGrade.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        
         String[] grades = {
             "Professeur titulaire", "Maître de Conférences",
             "Assistant d'Enseignement Supérieur et de Recherche",
             "Docteur HDR", "Docteur en Informatique", "Doctorant en informatique"
         };
-
+        
         cbGrade = new JComboBox<>(grades);
-        cbGrade.setBounds(99, 242, 200, 25);
-        getContentPane().add(cbGrade);
-
-        // Bouton Ajouter
-        JButton btnAjouter = new JButton("Ajouter");
-        btnAjouter.setBounds(114, 374, 100, 30);
+        cbGrade.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        cbGrade.setBackground(Color.WHITE);
+        
+        formPanel.add(lblNom);
+        formPanel.add(txtNom);
+        formPanel.add(lblPrenoms);
+        formPanel.add(txtPrenoms);
+        formPanel.add(lblGrade);
+        formPanel.add(cbGrade);
+        
+        // Panel des boutons
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
+        buttonPanel.setBackground(new Color(240, 240, 240));
+        
+        JButton btnAjouter = createStyledButton("Ajouter", new Color(46, 125, 50));
         btnAjouter.addActionListener(this::ajouterProfesseur);
-        getContentPane().add(btnAjouter);
-
-        // Bouton Modifier
-        JButton btnModifier = new JButton("Modifier");
-        btnModifier.setBounds(367, 374, 100, 30);
+        
+        JButton btnModifier = createStyledButton("Modifier", new Color(30, 136, 229));
         btnModifier.addActionListener(this::modifierProfesseur);
-        getContentPane().add(btnModifier);
-
-        // Bouton Supprimer
-        JButton btnSupprimer = new JButton("Supprimer");
-        btnSupprimer.setBounds(565, 374, 100, 30);
+        
+        JButton btnSupprimer = createStyledButton("Supprimer", new Color(198, 40, 40));
         btnSupprimer.addActionListener(this::supprimerProfesseur);
-        getContentPane().add(btnSupprimer);
-
-        // Tableau des professeurs
-        tableModel = new DefaultTableModel(new Object[]{"ID", "Nom", "Prénoms", "Grade"}, 0);
+        
+        JButton btnVider = createStyledButton("Vider", new Color(158, 158, 158));
+        btnVider.addActionListener(e -> viderChamps());
+        
+        buttonPanel.add(btnAjouter);
+        buttonPanel.add(btnModifier);
+        buttonPanel.add(btnSupprimer);
+        buttonPanel.add(btnVider);
+        
+        // Tableau des professeurs avec style amélioré
+        tableModel = new DefaultTableModel(new Object[]{"ID", "Nom", "Prénoms", "Grade"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // Rendre le tableau non éditable
+            }
+        };
+        
         table = new JTable(tableModel);
-        JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.setBounds(320, 40, 450, 287);
-        getContentPane().add(scrollPane);
-
-        // Sélection dans le tableau
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        table.setRowHeight(25);
+        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
+        table.getTableHeader().setBackground(new Color(70, 130, 180));
+        table.getTableHeader().setForeground(Color.BLACK);
+        table.setFillsViewportHeight(true);
+        
+        // Ajout d'un écouteur pour remplir les champs lors de la sélection
         table.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 int selectedRow = table.getSelectedRow();
@@ -100,37 +139,65 @@ public class ProfesseurView extends JFrame {
                 }
             }
         });
+        
+        JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setBorder(BorderFactory.createTitledBorder("Liste des Professeurs"));
+        
+        // Organisation des panels
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.add(formPanel, BorderLayout.CENTER);
+        topPanel.add(buttonPanel, BorderLayout.SOUTH);
+        
+        mainPanel.add(topPanel, BorderLayout.NORTH);
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
+        
+        add(mainPanel);
+    }
+    
+    private JButton createStyledButton(String text, Color bgColor) {
+        JButton button = new JButton(text);
+        button.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        button.setBackground(bgColor);
+        button.setForeground(Color.BLACK);
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return button;
     }
 
     private void setupMenuBar() {
         JMenuBar menuBar = new JMenuBar();
+        menuBar.setBackground(new Color(70, 130, 180));
+        menuBar.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
         
         // Menu Navigation
         JMenu mnNavigation = new JMenu("Navigation");
+        mnNavigation.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        mnNavigation.setForeground(Color.BLACK);
         
         // Item Professeur
-        JMenuItem miProfesseur = new JMenuItem("Professeurs");
+        JMenuItem miProfesseur = createMenuItem("Professeurs");
         miProfesseur.addActionListener(e -> {
             new ProfesseurView().setVisible(true);
             dispose();
         });
         
         // Item Classe
-        JMenuItem miClasse = new JMenuItem("Classes");
+        JMenuItem miClasse = createMenuItem("Classes");
         miClasse.addActionListener(e -> {
             new ClasseView().setVisible(true);
             dispose();
         });
         
         // Item Salle
-        JMenuItem miSalle = new JMenuItem("Salles");
+        JMenuItem miSalle = createMenuItem("Salles");
         miSalle.addActionListener(e -> {
             new SalleView().setVisible(true);
             dispose();
         });
         
         // Item Emploi du temps
-        JMenuItem miEDT = new JMenuItem("Emploi du temps");
+        JMenuItem miEDT = createMenuItem("Emploi du temps");
         miEDT.addActionListener(e -> {
             new EmploiDuTempsView().setVisible(true);
             dispose();
@@ -144,14 +211,20 @@ public class ProfesseurView extends JFrame {
         menuBar.add(mnNavigation);
         setJMenuBar(menuBar);
     }
+    
+    private JMenuItem createMenuItem(String text) {
+        JMenuItem menuItem = new JMenuItem(text);
+        menuItem.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        return menuItem;
+    }
 
     private void ajouterProfesseur(ActionEvent e) {
-        String nom = txtNom.getText();
-        String prenoms = txtPrenoms.getText();
+        String nom = txtNom.getText().trim();
+        String prenoms = txtPrenoms.getText().trim();
         String grade = cbGrade.getSelectedItem().toString();
 
         if (nom.isEmpty() || prenoms.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Veuillez remplir tous les champs.");
+            JOptionPane.showMessageDialog(this, "Veuillez remplir tous les champs.", "Erreur", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -159,42 +232,47 @@ public class ProfesseurView extends JFrame {
         boolean ok = ProfesseurDAO.ajouter(p);
 
         if (ok) {
-            JOptionPane.showMessageDialog(this, "Ajout réussi ! ID généré = " + p.getIdprof());
+            JOptionPane.showMessageDialog(this, "Ajout réussi ! ID généré = " + p.getIdprof(), "Succès", JOptionPane.INFORMATION_MESSAGE);
             viderChamps();
             afficherTousLesProfesseurs();
         } else {
-            JOptionPane.showMessageDialog(this, "Échec de l'ajout !");
+            JOptionPane.showMessageDialog(this, "Erreur lors de l'ajout !", "Erreur", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void modifierProfesseur(ActionEvent e) {
         int selectedRow = table.getSelectedRow();
         if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Sélectionnez un professeur à modifier.");
+            JOptionPane.showMessageDialog(this, "Veuillez sélectionner un professeur à modifier.", "Erreur", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
         int id = (int) tableModel.getValueAt(selectedRow, 0);
-        String nom = txtNom.getText();
-        String prenoms = txtPrenoms.getText();
+        String nom = txtNom.getText().trim();
+        String prenoms = txtPrenoms.getText().trim();
         String grade = cbGrade.getSelectedItem().toString();
+
+        if (nom.isEmpty() || prenoms.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Veuillez remplir tous les champs.", "Erreur", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
         Professeur p = new Professeur(id, nom, prenoms, grade);
         boolean ok = ProfesseurDAO.modifier(p);
 
         if (ok) {
-            JOptionPane.showMessageDialog(this, "Modification réussie !");
+            JOptionPane.showMessageDialog(this, "Modification réussie !", "Succès", JOptionPane.INFORMATION_MESSAGE);
             viderChamps();
             afficherTousLesProfesseurs();
         } else {
-            JOptionPane.showMessageDialog(this, "Échec de la modification !");
+            JOptionPane.showMessageDialog(this, "Erreur lors de la modification !", "Erreur", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void supprimerProfesseur(ActionEvent e) {
         int selectedRow = table.getSelectedRow();
         if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Sélectionnez un professeur à supprimer.");
+            JOptionPane.showMessageDialog(this, "Veuillez sélectionner un professeur à supprimer.", "Erreur", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -202,15 +280,16 @@ public class ProfesseurView extends JFrame {
 
         int confirm = JOptionPane.showConfirmDialog(this, 
             "Voulez-vous vraiment supprimer ce professeur ?", 
-            "Confirmation", JOptionPane.YES_NO_OPTION);
+            "Confirmation", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
         
         if (confirm == JOptionPane.YES_OPTION) {
             boolean ok = ProfesseurDAO.supprimer(id);
             if (ok) {
-                JOptionPane.showMessageDialog(this, "Suppression réussie !");
+                JOptionPane.showMessageDialog(this, "Suppression réussie !", "Succès", JOptionPane.INFORMATION_MESSAGE);
+                viderChamps();
                 afficherTousLesProfesseurs();
             } else {
-                JOptionPane.showMessageDialog(this, "Échec de la suppression !");
+                JOptionPane.showMessageDialog(this, "Erreur lors de la suppression !", "Erreur", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -231,6 +310,9 @@ public class ProfesseurView extends JFrame {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new ProfesseurView().setVisible(true));
+        SwingUtilities.invokeLater(() -> {
+            ProfesseurView frame = new ProfesseurView();
+            frame.setVisible(true);
+        });
     }
 }
